@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>items</key>
+	<array>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<true/>
+			<key>defaults</key>
+			<string>com.azurite.external</string>
+			<key>key</key>
+			<string>az_aimbot</string>
+			<key>label</key>
+			<string>Enable Aimbot</string>
+			<key>PostNotification</key>
+			<string>com.azurite.external/PreferencesChanged</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<true/>
+			<key>defaults</key>
+			<string>com.azurite.external</string>
+			<key>key</key>
+			<string>az_silent</string>
+			<key>label</key>
+			<string>Silent / Vectored Mode</string>
+			<key>PostNotification</key>
+			<string>com.azurite.external/PreferencesChanged</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSliderCell</string>
+			<key>default</key>
+			<real>14.0</real>
+			<key>defaults</key>
+			<string>com.azurite.external</string>
+			<key>key</key>
+			<string>az_fov</string>
+			<key>label</key>
+			<string>Aimbot FOV</string>
+			<key>min</key>
+			<real>5.0</real>
+			<key>max</key>
+			<real>30.0</real>
+			<key>PostNotification</key>
+			<string>com.azurite.external/PreferencesChanged</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSegmentCell</string>
+			<key>default</key>
+			<integer>0</integer>
+			<key>defaults</key>
+			<string>com.azurite.external</string>
+			<key>key</key>
+			<string>az_bone</string>
+			<key>label</key>
+			<string>Aim Bone</string>
+			<key>validValues</key>
+			<array>
+				<integer>0</integer>
+				<integer>1</integer>
+				<integer>2</integer>
+			</array>
+			<key>validTitles</key>
+			<array>
+				<string>Head</string>
+				<string>Neck</string>
+				<string>Body</string>
+			</array>
+			<key>PostNotification</key>
+			<string>com.azurite.external/PreferencesChanged</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<true/>
+			<key>defaults</key>
+			<string>com.azurite.external</string>
+			<key>key</key>
+			<string>az_esp</string>
+			<key>label</key>
+			<string>Enable ESP Box/Line</string>
+			<key>PostNotification</key>
+			<string>com.azurite.external/PreferencesChanged</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<true/>
+			<key>defaults</key>
+			<string>com.azurite.external</string>
+			<key>key</key>
+			<string>az_no_recoil</string>
+			<key>label</key>
+			<string>No Recoil</string>
+			<key>PostNotification</key>
+			<string>com.azurite.external/PreferencesChanged</string>
+		</dict>
+		<dict>
+			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<true/>
+			<key>defaults</key>
+			<string>com.azurite.external</string>
+			<key>key</key>
+			<string>az_streamproof</string>
+			<key>label</key>
+			<string>Stream-Proof (Hide Record/Screenshot)</string>
+			<key>PostNotification</key>
+			<string>com.azurite.external/PreferencesChanged</string>
+		</dict>
+	</array>
+	<key>title</key>
+	<string>Azurite External Settings</string>
+</dict>
+</plist>
