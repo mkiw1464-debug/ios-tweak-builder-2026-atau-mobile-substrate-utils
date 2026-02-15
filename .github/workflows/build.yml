@@ -28,17 +28,19 @@ jobs:
           echo "$HOME/theos/bin" >> $GITHUB_PATH
           echo "PATH=$PATH:$HOME/theos/bin" >> $GITHUB_ENV
 
-      - name: Debug Project Structure
+      - name: Debug Project
         run: |
           pwd
           ls -la .
-          ls -la Makefile control Tweak.mm || echo "Missing files!"
+          cat Makefile || echo "Makefile missing!"
+          cat control || echo "control missing!"
+          head -n 10 Tweak.mm || echo "Tweak.mm missing!"
 
       - name: Build tweak
         run: |
           make clean || true
-          make package FINALPACKAGE=1 V=1 || echo "Make failed - check log above"
-          ls -la packages/ obj/ || echo "No output folders"
+          make package FINALPACKAGE=1 V=1 || echo "Make failed - see log above"
+          ls -la packages/ obj/ 2>/dev/null || echo "No output generated"
 
       - name: Upload artifacts
         if: always()
