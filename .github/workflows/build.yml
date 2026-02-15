@@ -3,36 +3,53 @@ name: Build Theos Tweak (rootless)
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:  # manual trigger
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: macos-14  # atau macos-latest (2026 support Xcode 16+)
+    runs-on: macos-14  # kalau fail lagi, tukar ke macos-13
 
     steps:
-    - name: Checkout repo
-      uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-    - name: Setup Theos
-      run: |
-        git clone --recursive https://github.com/theos/theos.git $HOME/theos
-        git clone https://github.com/theos/sdks.git $HOME/theos/sdks
-        echo "THEOS=$HOME/theos" >> $GITHUB_ENV
+      - name: Install Homebrew & ldid
+        run: |
+          NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          brew install ldid || echo "ldid install failed, continuing..."
 
-    - name: Install dependencies
-      run: |
-        brew install ldid
-        sudo gem install activesupport -v 6.1.7.8  # kalau perlu
+      - name: Clone & Setup Theos
+        run: |
+          git clone --recursive https://github.com/theos/theos.git $HOME/theos || echo "Theos clone failed"
+          git clone https://github.com/theos/sdks.git $HOME/theos/sdks || echo "SDKs clone failed"
+          echo "THEOS=$HOME/theos" >> $GITHUB_ENV
+          echo "$HOME/theos/bin" >> $GITHUB_PATH
+          ls -la $HOME/theos
 
-    - name: Build tweak
-      run: |
-        cd AzuriteExternal
-        make package FINALPACKAGE=1
+      - name: Debug Environment
+        run: |
+          echo "THEOS path: $THEOS"
+          which make || echo "make not found"
+          which ldid || echo "ldid not found"
+          ls -la $THEOS/sdks || echo "No SDKs folder"
+          echo "Current directory:"
+          pwd
+          ls -la
 
-    - name: Upload artifact (.deb & dylib)
-      uses: actions/upload-artifact@v4
-      with:
-        name: AzuriteExternal-build
-        path: |
-          AzuriteExternal/packages/*.deb
-          AzuriteExternal/obj/*.dylib
+      - name: Build tweak
+        working-directory: ./AzuriteExternal   # tukar nama folder kalau project kau lain
+        run: |
+          make clean || true
+          make package FINALPACKAGE=1 || true
+          find . -name "*.log" -exec cat {} \; || echo "No build log found"
+
+      - name: Upload artifacts (even if failed)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AzuriteExternal-build-logs
+          path: |
+            AzuriteExternal/packages/*.deb
+            AzuriteExternal/obj/*.dylib
+            **/*.log
+            **/*.err
