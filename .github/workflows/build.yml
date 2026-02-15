@@ -26,26 +26,23 @@ jobs:
           git clone https://github.com/theos/sdks.git $HOME/theos/sdks
           echo "THEOS=$HOME/theos" >> $GITHUB_ENV
           echo "$HOME/theos/bin" >> $GITHUB_PATH
-          echo "PATH=$PATH:$HOME/theos/bin" >> $GITHUB_ENV
 
-      - name: Debug Full Structure
+      - name: Debug Files
         run: |
           pwd
           ls -la .
-          cat Makefile || echo "Makefile NOT FOUND"
-          cat control || echo "control NOT FOUND"
-          head -n 10 Tweak.mm || echo "Tweak.mm NOT FOUND"
-          echo "THEOS path: $THEOS"
-          ls -la $THEOS/sdks || echo "SDKs missing"
+          cat Makefile || echo "Makefile missing"
+          cat control || echo "control missing"
+          head Tweak.mm || echo "Tweak.mm missing"
 
       - name: Build
         run: |
           make clean || true
-          make package FINALPACKAGE=1 V=1 2>&1 | tee build.log || echo "Make failed"
-          cat build.log || echo "No build log"
-          ls -la packages/ obj/ 2>/dev/null || echo "No output folders created"
+          make package FINALPACKAGE=1 V=1 2>&1 | tee build.log
+          cat build.log
+          ls -la packages/ obj/ 2>/dev/null || echo "No output"
 
-      - name: Upload artifacts
+      - name: Upload
         if: always()
         uses: actions/upload-artifact@v4
         with:
