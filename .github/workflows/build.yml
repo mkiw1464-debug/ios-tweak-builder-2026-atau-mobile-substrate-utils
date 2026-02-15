@@ -17,7 +17,7 @@ jobs:
         run: |
           NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
           eval "$(/opt/homebrew/bin/brew shellenv)"
-          brew install ldid || echo "ldid failed"
+          brew install ldid
 
       - name: Setup Theos
         run: |
@@ -28,19 +28,22 @@ jobs:
           echo "$HOME/theos/bin" >> $GITHUB_PATH
           echo "PATH=$PATH:$HOME/theos/bin" >> $GITHUB_ENV
 
-      - name: Debug Project
+      - name: Debug Full Structure
         run: |
           pwd
           ls -la .
-          cat Makefile || echo "Makefile missing!"
-          cat control || echo "control missing!"
-          head -n 10 Tweak.mm || echo "Tweak.mm missing!"
+          cat Makefile || echo "Makefile NOT FOUND"
+          cat control || echo "control NOT FOUND"
+          head -n 10 Tweak.mm || echo "Tweak.mm NOT FOUND"
+          echo "THEOS path: $THEOS"
+          ls -la $THEOS/sdks || echo "SDKs missing"
 
-      - name: Build tweak
+      - name: Build
         run: |
           make clean || true
-          make package FINALPACKAGE=1 V=1 || echo "Make failed - see log above"
-          ls -la packages/ obj/ 2>/dev/null || echo "No output generated"
+          make package FINALPACKAGE=1 V=1 2>&1 | tee build.log || echo "Make failed"
+          cat build.log || echo "No build log"
+          ls -la packages/ obj/ 2>/dev/null || echo "No output folders created"
 
       - name: Upload artifacts
         if: always()
@@ -50,4 +53,4 @@ jobs:
           path: |
             packages/*.deb
             obj/*.dylib
-            **/*.log
+            build.log
