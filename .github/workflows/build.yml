@@ -13,11 +13,11 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Install Homebrew & ldid
+      - name: Install Homebrew & ldid & dpkg
         run: |
           NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
           eval "$(/opt/homebrew/bin/brew shellenv)"
-          brew install ldid dpkg  # tambah dpkg kalau missing
+          brew install ldid dpkg || echo "dpkg install failed"
 
       - name: Setup Theos
         run: |
@@ -27,28 +27,33 @@ jobs:
           echo "THEOS=$HOME/theos" >> $GITHUB_ENV
           echo "$HOME/theos/bin" >> $GITHUB_PATH
 
-      - name: Debug All Files
+      - name: Debug & List Files
         run: |
           pwd
           ls -la .
-          ls -la AzuriteExternal.plist || echo "Plist missing!"
+          ls -la AzuriteExternal.plist || echo "Plist missing"
           cat AzuriteExternal.plist || echo "Plist content error"
+          ls -la Tweak.xm Makefile control || echo "Missing core files"
 
-      - name: Build & Stage
+      - name: Build & Force Stage
         run: |
           make clean || true
           make package FINALPACKAGE=1 V=1 2>&1 | tee build.log
           cat build.log
-          ls -la packages/ obj/ .theos/ 2>/dev/null || echo "No output folders"
-          find . -name "*.deb" -exec ls -la {} \; || echo "No deb found"
+          mkdir -p artifacts
+          cp -r packages obj .theos artifacts/ 2>/dev/null || echo "No output to copy"
+          find . -name "*.deb" -exec cp {} artifacts/ \; || echo "No deb"
+          find . -name "*.dylib" -exec cp {} artifacts/ \; || echo "No dylib"
+          ls -la artifacts/
 
-      - name: Upload
+      - name: Upload Full Artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: Azurite-build-full
+          name: Azurite-full-output
           path: |
-            packages/*.deb
-            obj/*.dylib
+            artifacts/**
             build.log
+            packages/**
+            obj/**
             AzuriteExternal.plist
