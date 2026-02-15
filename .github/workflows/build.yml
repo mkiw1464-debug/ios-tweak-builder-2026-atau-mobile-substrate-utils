@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: macos-14  # kalau fail lagi, tukar ke macos-13
+    runs-on: macos-14
 
     steps:
       - name: Checkout repo
@@ -16,40 +16,40 @@ jobs:
       - name: Install Homebrew & ldid
         run: |
           NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-          brew install ldid || echo "ldid install failed, continuing..."
+          (echo; echo 'eval "$(/opt/homebrew/bin/brew shellenv)"') >> $HOME/.zprofile
+          eval "$(/opt/homebrew/bin/brew shellenv)"
+          brew install ldid || echo "ldid failed"
 
-      - name: Clone & Setup Theos
+      - name: Setup Theos
         run: |
-          git clone --recursive https://github.com/theos/theos.git $HOME/theos || echo "Theos clone failed"
-          git clone https://github.com/theos/sdks.git $HOME/theos/sdks || echo "SDKs clone failed"
+          git clone --recursive https://github.com/theos/theos.git $HOME/theos
+          git clone https://github.com/theos/sdks.git $HOME/theos/sdks
           echo "THEOS=$HOME/theos" >> $GITHUB_ENV
           echo "$HOME/theos/bin" >> $GITHUB_PATH
-          ls -la $HOME/theos
+          echo "PATH=$PATH:$HOME/theos/bin" >> $GITHUB_ENV
 
-      - name: Debug Environment
+      - name: Debug Setup
         run: |
-          echo "THEOS path: $THEOS"
-          which make || echo "make not found"
-          which ldid || echo "ldid not found"
-          ls -la $THEOS/sdks || echo "No SDKs folder"
-          echo "Current directory:"
+          echo "THEOS=$THEOS"
+          ls -la $THEOS
+          which make
+          which ldid
+          ls -la $THEOS/sdks
           pwd
-          ls -la
+          ls -la .
 
       - name: Build tweak
-        working-directory: ./AzuriteExternal   # tukar nama folder kalau project kau lain
-        run: |
+        run: |  # TAK ADA working-directory – run di root
           make clean || true
           make package FINALPACKAGE=1 || true
-          find . -name "*.log" -exec cat {} \; || echo "No build log found"
+          find . -name "*.log" -exec cat {} \; || echo "No log"
 
-      - name: Upload artifacts (even if failed)
+      - name: Upload artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: AzuriteExternal-build-logs
+          name: Azurite-build
           path: |
-            AzuriteExternal/packages/*.deb
-            AzuriteExternal/obj/*.dylib
+            packages/*.deb
+            obj/*.dylib
             **/*.log
-            **/*.err
