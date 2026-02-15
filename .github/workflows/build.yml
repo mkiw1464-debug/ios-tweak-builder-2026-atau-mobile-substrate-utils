@@ -16,35 +16,29 @@ jobs:
       - name: Install Homebrew & ldid
         run: |
           NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-          (echo; echo 'eval "$(/opt/homebrew/bin/brew shellenv)"') >> $HOME/.zprofile
           eval "$(/opt/homebrew/bin/brew shellenv)"
-          brew install ldid || echo "ldid install failed"
+          brew install ldid || echo "ldid failed"
 
       - name: Setup Theos
         run: |
-          git clone --recursive https://github.com/theos/theos.git $HOME/theos || echo "Theos clone failed"
-          # Fix clash: rm sdks kalau sudah ada, baru clone fresh
+          git clone --recursive https://github.com/theos/theos.git $HOME/theos
           rm -rf $HOME/theos/sdks || true
-          git clone https://github.com/theos/sdks.git $HOME/theos/sdks || echo "SDKs clone failed"
+          git clone https://github.com/theos/sdks.git $HOME/theos/sdks
           echo "THEOS=$HOME/theos" >> $GITHUB_ENV
           echo "$HOME/theos/bin" >> $GITHUB_PATH
           echo "PATH=$PATH:$HOME/theos/bin" >> $GITHUB_ENV
 
-      - name: Debug Setup
+      - name: Debug Project Structure
         run: |
-          echo "THEOS=$THEOS"
-          ls -la $THEOS
-          which make
-          which ldid
-          ls -la $THEOS/sdks || echo "SDKs folder missing"
           pwd
           ls -la .
+          ls -la Makefile control Tweak.mm || echo "Missing files!"
 
       - name: Build tweak
         run: |
           make clean || true
-          make package FINALPACKAGE=1 || true
-          find . -name "*.log" -exec cat {} \; || echo "No log"
+          make package FINALPACKAGE=1 V=1 || echo "Make failed - check log above"
+          ls -la packages/ obj/ || echo "No output folders"
 
       - name: Upload artifacts
         if: always()
