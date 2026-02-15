@@ -1,6 +1,5 @@
-// Tweak.xm - Azurite External v3.3
-// Triple tap 3 jari 3 kali → toggle floating menu
-// Compile rootless, inject via eSign
+// Tweak.xm - Azurite External v3.4 (floating menu + full features)
+// Triple tap 3 jari 3 kali → toggle menu
 
 #include <substrate.h>
 #include <dlfcn.h>
@@ -16,11 +15,11 @@ static int ESPMode = 0;           // 0=Line, 1=Box, 2=Skeleton, 3=Distance+Healt
 static BOOL SilentAim = NO;
 static BOOL StreamProof = YES;
 
-// Floating menu global
+// Floating menu
 static UIView *menuView = nil;
 static CGPoint lastPanPoint;
 
-// Gesture hook (independent)
+// Gesture & menu logic (semua %new di dalam %hook UIWindow)
 %hook UIWindow
 - (void)becomeKeyWindow {
     %orig;
@@ -31,9 +30,7 @@ static CGPoint lastPanPoint;
     tripleTap.cancelsTouchesInView = NO;
     [self addGestureRecognizer:tripleTap];
 }
-%end
 
-// Menu toggle method (dipanggil dari gesture)
 %new
 - (void)toggleAzuriteMenu:(UITapGestureRecognizer *)gesture {
     if (gesture.state == UIGestureRecognizerStateRecognized) {
@@ -151,7 +148,7 @@ static CGPoint lastPanPoint;
     menuView = nil;
 }
 
-// Streamproof hooks (independent)
+// Streamproof hooks (pisah block)
 %hook UIScreen
 + (UIImage *)captureScreen {
     if (StreamProof) return nil;
@@ -166,7 +163,7 @@ static CGPoint lastPanPoint;
 }
 %end
 
-// Placeholder real hooks (add offsets & logic)
+// Placeholder real hooks (update offsets & tambah logic)
 %hook PlayerMovement
 - (void)Update {
     %orig;
