@@ -1,6 +1,5 @@
-// Tweak.xm - Azurite External v3.1
-// Triple tap 3 jari 3 kali → toggle floating menu
-// Fitur: Aimbot bone (Head/Neck/Body), ESP (Line/Box/Skeleton/Distance+Health), Silent Aim, Streamproof
+// Tweak.xm - Azurite External v3.2 (floating menu + full features)
+// Triple tap 3 jari 3 kali → toggle menu
 
 #include <substrate.h>
 #include <dlfcn.h>
@@ -20,11 +19,7 @@ static BOOL StreamProof = YES;
 static UIView *menuView = nil;
 static CGPoint lastPanPoint;
 
-// Placeholder offsets – UPDATE DENGAN DUMP
-uintptr_t OFF_LOCAL_PLAYER = 0x1A8C1F0;
-uintptr_t OFF_PLAYER_LIST  = 0x1A7D9A8 + 0x120;
-
-// Gesture hook (tak nested)
+// Gesture & menu logic (dalam %hook UIWindow)
 %hook UIWindow
 - (void)becomeKeyWindow {
     %orig;
@@ -35,7 +30,6 @@ uintptr_t OFF_PLAYER_LIST  = 0x1A7D9A8 + 0x120;
     tripleTap.cancelsTouchesInView = NO;
     [self addGestureRecognizer:tripleTap];
 }
-%end
 
 %new
 - (void)toggleAzuriteMenu:(UITapGestureRecognizer *)gesture {
@@ -51,7 +45,6 @@ uintptr_t OFF_PLAYER_LIST  = 0x1A7D9A8 + 0x120;
                 menuView.layer.borderColor = [UIColor colorWithRed:0 green:0.85 blue:1 alpha:0.8].CGColor;
                 menuView.clipsToBounds = YES;
 
-                // Title
                 UILabel *title = [[UILabel alloc] initWithFrame:CGRectMake(0, 10, 260, 34)];
                 title.text = @"Azurite External";
                 title.textColor = [UIColor cyanColor];
@@ -59,7 +52,6 @@ uintptr_t OFF_PLAYER_LIST  = 0x1A7D9A8 + 0x120;
                 title.font = [UIFont boldSystemFontOfSize:20];
                 [menuView addSubview:title];
 
-                // Draggable
                 UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(dragMenu:)];
                 [menuView addGestureRecognizer:pan];
 
@@ -171,23 +163,21 @@ uintptr_t OFF_PLAYER_LIST  = 0x1A7D9A8 + 0x120;
 }
 %end
 
-// Placeholder real hooks (update offsets & add full logic)
+// Placeholder real hooks (update offsets & add logic)
 %hook PlayerMovement
 - (void)Update {
     %orig;
     if (EnableAimbot || SilentAim) {
-        // Placeholder – real aimbot/silent aim logic di sini
-        // Contoh: find closest player, calc angle, write bullet dir kalau SilentAim
+        // Placeholder – tambah aimbot/silent aim sebenar di sini
     }
 }
 %end
 
 %ctor {
     @autoreleasepool {
-        // Anti detect basic
         void* il2cpp = dlopen("libil2cpp.so", RTLD_LAZY);
         if (il2cpp) {
-            // Add real hooks nanti
+            // Tambah real hooks nanti
         }
     }
 }
