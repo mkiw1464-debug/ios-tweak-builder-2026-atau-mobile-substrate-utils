@@ -1,11 +1,11 @@
-// Tweak.xm - Azurite External (kemaskini dengan triple tap 3 jari menu)
+// Tweak.xm - Azurite External (kemaskini Feb 2026)
+// Triple tap 3 jari 3 kali untuk toggle menu
 
 #include <substrate.h>
 #include <dlfcn.h>
-#include <sys/ptrace.h>
 #include <UIKit/UIKit.h>
 
-// Config fitur (toggle dari menu nanti)
+// Config fitur (toggle dari menu)
 static BOOL EnableAimbot = NO;
 static BOOL StreamProof = NO;
 
@@ -13,42 +13,42 @@ static BOOL StreamProof = NO;
 - (void)becomeKeyWindow {
     %orig;
 
-    // Tambah gesture triple tap 3 jari
-    UITapGestureRecognizer *tripleTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(azuriteTripleTapMenu:)];
+    // Gesture triple tap 3 jari
+    UITapGestureRecognizer *tripleTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(azuriteMenuToggle:)];
     tripleTap.numberOfTapsRequired = 3;
     tripleTap.numberOfTouchesRequired = 3;
-    tripleTap.cancelsTouchesInView = NO;  // biar game masih respon touch
+    tripleTap.cancelsTouchesInView = NO;  // biar game masih boleh respon touch
     [self addGestureRecognizer:tripleTap];
 }
 
 %new
-- (void)azuriteTripleTapMenu:(UITapGestureRecognizer *)gesture {
+- (void)azuriteMenuToggle:(UITapGestureRecognizer *)gesture {
     if (gesture.state == UIGestureRecognizerStateRecognized) {
         static BOOL menuVisible = NO;
         menuVisible = !menuVisible;
 
         if (menuVisible) {
-            // Menu muncul (test popup dulu - nanti tukar ke ImGui/custom UI)
-            UIAlertController *menu = [UIAlertController alertControllerWithTitle:@"Azurite External" message:@"Menu Opened\nToggle fitur di sini nanti" preferredStyle:UIAlertControllerStyleAlert];
+            // Menu muncul - popup dengan toggle
+            UIAlertController *menu = [UIAlertController alertControllerWithTitle:@"Azurite External" message:@"Menu Toggle" preferredStyle:UIAlertControllerStyleAlert];
 
             // Toggle Aimbot
             [menu addAction:[UIAlertAction actionWithTitle:[NSString stringWithFormat:@"Aimbot: %@", EnableAimbot ? @"ON" : @"OFF"] style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
                 EnableAimbot = !EnableAimbot;
-                // Tambah logic aimbot di sini nanti
+                // Nanti tambah logic aimbot sebenar di sini
             }]];
 
-            // Toggle Stream-Proof
+            // Toggle Hide Record/Screenshot
             [menu addAction:[UIAlertAction actionWithTitle:[NSString stringWithFormat:@"Hide Rec: %@", StreamProof ? @"ON" : @"OFF"] style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
                 StreamProof = !StreamProof;
-                // Tambah hook screenshot di sini nanti
+                // Nanti tambah hook screenshot/record di sini
             }]];
 
-            [menu addAction:[UIAlertAction actionWithTitle:@"Close" style:UIAlertActionStyleCancel handler:nil]];
+            [menu addAction:[UIAlertAction actionWithTitle:@"Close Menu" style:UIAlertActionStyleCancel handler:nil]];
 
             [UIApplication.sharedApplication.keyWindow.rootViewController presentViewController:menu animated:YES completion:nil];
         } else {
-            // Menu tutup (untuk test popup)
-            UIAlertController *close = [UIAlertController alertControllerWithTitle:@"Azurite External" message:@"Menu Hidden" preferredStyle:UIAlertActionStyleAlert];
+            // Menu tutup
+            UIAlertController *close = [UIAlertController alertControllerWithTitle:@"Azurite External" message:@"Menu Hidden" preferredStyle:UIAlertControllerStyleAlert];
             [close addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
             [UIApplication.sharedApplication.keyWindow.rootViewController presentViewController:close animated:YES completion:nil];
         }
@@ -58,11 +58,10 @@ static BOOL StreamProof = NO;
 
 %ctor {
     @autoreleasepool {
-        ptrace(PT_DENY_ATTACH, 0, 0, 0);
-
+        // Test dlopen (untuk confirm libil2cpp load)
         void* il2cpp = dlopen("libil2cpp.so", RTLD_LAZY);
         if (il2cpp) {
-            // Test hook simple (boleh tambah fitur sebenar nanti)
+            // Placeholder - tambah hook sebenar nanti
         }
     }
 }
