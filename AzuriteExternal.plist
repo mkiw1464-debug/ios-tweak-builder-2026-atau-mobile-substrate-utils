@@ -6,8 +6,7 @@
     <dict>
         <key>Bundles</key>
         <array>
-            <string>com.garena.game.ff</string>  <!-- FF global iOS -->
-            <string>com.garena.game.ffmax</string>  <!-- FF MAX kalau nak -->
+            <string>com.garena.game.ff</string>
         </array>
     </dict>
 </dict>
