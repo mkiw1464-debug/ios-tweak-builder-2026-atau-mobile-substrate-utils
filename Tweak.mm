@@ -1,5 +1,5 @@
-// Tweak.mm - Azurite External (Feb 2026 sim)
-// Compile dengan Theos rootless: make package FINALPACKAGE=1
+// Tweak.mm - Azurite External (kemaskini Feb 2026)
+// Compile: Theos rootless, target bundle com.garena.game.ff
 
 #include <substrate.h>
 #include <dlfcn.h>
@@ -10,11 +10,13 @@
 #include <vector>
 #include <random>
 #include <ctime>
+#include <Preferences/Preferences.h>
 
 #define AZURITE_VERSION "External 1.0 – Feb 2026"
 
 // ────────────────────────────────────────────────
-// Offsets (UPDATE DENGAN DUMP TERKINI SETIAP OB!)
+// Offsets (KEMASKINI DENGAN DUMP TERKINI SETIAP OB!)
+// Contoh offset OB52-ish – dump guna Il2CppDumper
 uintptr_t OFF_LOCAL_PLAYER       = 0x1A8C1F0;
 uintptr_t OFF_PLAYER_LIST        = 0x1A7D9A8 + 0x120;
 uintptr_t OFF_HEALTH             = 0x1A4E720;
@@ -26,30 +28,43 @@ uintptr_t OFF_VISIBLE            = 0x1B2D410;
 uintptr_t OFF_BULLET_DIRECTION   = 0x1D2E100 + 0x28;
 
 // ────────────────────────────────────────────────
-// Config
+// Config dari plist (Settings app)
 bool   az_aimbot         = true;
 bool   az_silent         = true;
 int    az_bone           = 0;        // 0=head, 1=neck, 2=body
 float  az_fov            = 14.0f;
-float  az_smooth         = 0.16f;
 bool   az_esp            = true;
 bool   az_no_recoil      = true;
 bool   az_streamproof    = true;
 
 // Globals
 void*  g_local           = nullptr;
-void*  g_camera          = nullptr;
 Vector3 (*WorldToScreenPoint)(void*, Vector3);
 
 // ────────────────────────────────────────────────
-// Bypass antiban layer
+// Load preferences dari com.azurite.external.plist
+static void loadPrefs() {
+    NSDictionary *prefs = [NSDictionary dictionaryWithContentsOfFile:@"/var/mobile/Library/Preferences/com.azurite.external.plist"];
+    if (prefs) {
+        az_aimbot      = [prefs objectForKey:@"az_aimbot"]     ? [[prefs objectForKey:@"az_aimbot"] boolValue]     : az_aimbot;
+        az_silent      = [prefs objectForKey:@"az_silent"]     ? [[prefs objectForKey:@"az_silent"] boolValue]     : az_silent;
+        az_fov         = [prefs objectForKey:@"az_fov"]        ? [[prefs objectForKey:@"az_fov"] floatValue]       : az_fov;
+        az_bone        = [prefs objectForKey:@"az_bone"]       ? [[prefs objectForKey:@"az_bone"] intValue]        : az_bone;
+        az_esp         = [prefs objectForKey:@"az_esp"]        ? [[prefs objectForKey:@"az_esp"] boolValue]        : az_esp;
+        az_no_recoil   = [prefs objectForKey:@"az_no_recoil"]  ? [[prefs objectForKey:@"az_no_recoil"] boolValue]   : az_no_recoil;
+        az_streamproof = [prefs objectForKey:@"az_streamproof"] ? [[prefs objectForKey:@"az_streamproof"] boolValue] : az_streamproof;
+    }
+}
+
+// ────────────────────────────────────────────────
+// Bypass antiban
 static void anti_debug() {
     ptrace(PT_DENY_ATTACH, 0, 0, 0);
 }
 
 static const char* (*orig_UUID)();
 static const char* hooked_UUID() {
-    static std::string spoof = "AzuriteSpoof-" + std::to_string(rand() % 99999999);
+    static std::string spoof = "AzSpoof-" + std::to_string(rand() % 99999999 + 10000000);
     return spoof.c_str();
 }
 
@@ -67,17 +82,19 @@ Vector3 get_bone(void* player, int bone) {
     return *(Vector3*)((uintptr_t)player + off);
 }
 
-bool is_valid(void* p) {
+bool is_valid_target(void* p) {
     if (!p) return false;
     int hp = *(int*)((uintptr_t)p + OFF_HEALTH);
     if (hp <= 0 || hp > 200) return false;
     if (!*(uint8_t*)((uintptr_t)p + OFF_VISIBLE)) return false;
+    // team check (tambah kalau ada offset team)
     return true;
 }
 
-void* find_closest() {
-    // Placeholder: implement player list scan
-    return nullptr;
+void* find_closest_target() {
+    // Placeholder: scan player list (real impl perlukan loop entity manager)
+    // Contoh naive: cari memory range & check signature player object
+    return nullptr; // KEMASKINI: tambah logic scan sebenar
 }
 
 void apply_silent_aim(void* local, void* target) {
@@ -85,43 +102,56 @@ void apply_silent_aim(void* local, void* target) {
     Vector3 dst = get_bone(target, az_bone);
     Vector3 dir = {dst.x - src.x, dst.y - src.y, dst.z - src.z};
     float len = sqrtf(dir.x*dir.x + dir.y*dir.y + dir.z*dir.z);
-    if (len > 0.01f) {
-        dir.x /= len; dir.y /= len; dir.z /= len;
-        // humanize micro-random
-        dir.x += (rand() % 100 - 50) / 10000.0f;
-        *(Vector3*)((uintptr_t)local + OFF_BULLET_DIRECTION) = dir;
-    }
+    if (len < 0.01f) return;
+
+    dir.x /= len; dir.y /= len; dir.z /= len;
+    // humanize micro-random (anti behaviour detect)
+    dir.x += (rand() % 100 - 50) / 12000.0f;
+    dir.y += (rand() % 100 - 50) / 12000.0f;
+
+    *(Vector3*)((uintptr_t)local + OFF_BULLET_DIRECTION) = dir;
 }
 
 // ────────────────────────────────────────────────
-// Hooked function
+// Hooked Update
 void (*orig_Update)(void*);
 void hooked_Update(void* self) {
-    bool is_local = *(bool*)((uintptr_t)self + 0x18);
+    bool is_local = *(bool*)((uintptr_t)self + 0x18); // approx IsLocalPlayer
     if (is_local) {
         g_local = self;
+
         if (az_aimbot) {
-            void* tgt = find_closest();
-            if (tgt && is_valid(tgt)) {
-                if (az_silent) apply_silent_aim(self, tgt);
+            void* target = find_closest_target();
+            if (target && is_valid_target(target)) {
+                if (az_silent) apply_silent_aim(self, target);
             }
         }
+
+        // ESP logic (tambah kalau ada draw hook)
     }
+
     orig_Update(self);
 }
 
 // ────────────────────────────────────────────────
-// Entry
+// Entry point
 %ctor {
     @autoreleasepool {
         srand(time(NULL));
 
-        void* handle = dlopen("libil2cpp.so", RTLD_LAZY);
-        if (!handle) return;
+        // Load preferences awal
+        CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(),
+            NULL, (CFNotificationCallback)loadPrefs,
+            CFSTR("com.azurite.external/PreferencesChanged"), NULL,
+            CFNotificationSuspensionBehaviorDeliverImmediately);
+        loadPrefs();
 
-        WorldToScreenPoint = (decltype(WorldToScreenPoint))dlsym(handle, "WorldToScreenPoint");
+        void* il2cpp = dlopen("libil2cpp.so", RTLD_LAZY);
+        if (!il2cpp) return;
 
-        void* update_sym = dlsym(handle, "_ZN12PlayerMovement6UpdateEv");
+        WorldToScreenPoint = (decltype(WorldToScreenPoint))dlsym(il2cpp, "WorldToScreenPoint");
+
+        void* update_sym = dlsym(il2cpp, "_ZN12PlayerMovement6UpdateEv");
         if (update_sym) MSHookFunction(update_sym, (void*)hooked_Update, (void**)&orig_Update);
 
         // Bypass hooks
