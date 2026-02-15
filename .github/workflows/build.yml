@@ -18,12 +18,14 @@ jobs:
           NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
           (echo; echo 'eval "$(/opt/homebrew/bin/brew shellenv)"') >> $HOME/.zprofile
           eval "$(/opt/homebrew/bin/brew shellenv)"
-          brew install ldid || echo "ldid failed"
+          brew install ldid || echo "ldid install failed"
 
       - name: Setup Theos
         run: |
-          git clone --recursive https://github.com/theos/theos.git $HOME/theos
-          git clone https://github.com/theos/sdks.git $HOME/theos/sdks
+          git clone --recursive https://github.com/theos/theos.git $HOME/theos || echo "Theos clone failed"
+          # Fix clash: rm sdks kalau sudah ada, baru clone fresh
+          rm -rf $HOME/theos/sdks || true
+          git clone https://github.com/theos/sdks.git $HOME/theos/sdks || echo "SDKs clone failed"
           echo "THEOS=$HOME/theos" >> $GITHUB_ENV
           echo "$HOME/theos/bin" >> $GITHUB_PATH
           echo "PATH=$PATH:$HOME/theos/bin" >> $GITHUB_ENV
@@ -34,12 +36,12 @@ jobs:
           ls -la $THEOS
           which make
           which ldid
-          ls -la $THEOS/sdks
+          ls -la $THEOS/sdks || echo "SDKs folder missing"
           pwd
           ls -la .
 
       - name: Build tweak
-        run: |  # TAK ADA working-directory – run di root
+        run: |
           make clean || true
           make package FINALPACKAGE=1 || true
           find . -name "*.log" -exec cat {} \; || echo "No log"
