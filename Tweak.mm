@@ -4,14 +4,6 @@
 %ctor {
     @autoreleasepool {
         ptrace(PT_DENY_ATTACH, 0, 0, 0);
-
-        void* handle = dlopen("libil2cpp.so", RTLD_LAZY);
-        if (handle) {
-            // Test hook simple
-            void* sym = dlsym(handle, "_ZN12PlayerMovement6UpdateEv");
-            if (sym) {
-                // Placeholder hook
-            }
-        }
+        // Test hook simple
     }
 }
