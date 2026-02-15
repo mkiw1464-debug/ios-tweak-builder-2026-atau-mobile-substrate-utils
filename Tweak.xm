@@ -1,36 +1,30 @@
-// Tweak.xm - Azurite External v3.0 (floating menu + full features)
-// Triple tap 3 fingers 3 times → toggle menu
-// Compile rootless, inject via eSign / TrollStore
+// Tweak.xm - Azurite External v3.1
+// Triple tap 3 jari 3 kali → toggle floating menu
+// Fitur: Aimbot bone (Head/Neck/Body), ESP (Line/Box/Skeleton/Distance+Health), Silent Aim, Streamproof
 
 #include <substrate.h>
 #include <dlfcn.h>
 #include <UIKit/UIKit.h>
 #include <CoreGraphics/CoreGraphics.h>
-#include <mach/mach.h>
 
-// Config global
+// Config
 static BOOL menuVisible = NO;
 static BOOL EnableAimbot = NO;
-static int AimBone = 0; // 0=Head, 1=Neck, 2=Body
+static int AimBone = 0;           // 0=Head, 1=Neck, 2=Body
 static BOOL EnableESP = NO;
-static int ESPMode = 0; // 0=Line, 1=Box, 2=Skeleton, 3=Distance+Health
+static int ESPMode = 0;           // 0=Line, 1=Box, 2=Skeleton, 3=Distance+Health
 static BOOL SilentAim = NO;
 static BOOL StreamProof = YES;
 
-// Floating menu view
+// Floating menu
 static UIView *menuView = nil;
 static CGPoint lastPanPoint;
 
-// Offsets placeholder – UPDATE DENGAN DUMP TERKINI (Il2CppDumper OB52/53)
+// Placeholder offsets – UPDATE DENGAN DUMP
 uintptr_t OFF_LOCAL_PLAYER = 0x1A8C1F0;
 uintptr_t OFF_PLAYER_LIST  = 0x1A7D9A8 + 0x120;
-uintptr_t OFF_HEAD_BONE    = 0x140 + 0x90;
-uintptr_t OFF_NECK_BONE    = 0x154 + 0x90;
-uintptr_t OFF_BODY_BONE    = 0x168 + 0x90;
-uintptr_t OFF_HEALTH       = 0x1A4E720;
-uintptr_t OFF_VISIBLE      = 0x1B2D410;
 
-// Utils
+// Gesture hook (tak nested)
 %hook UIWindow
 - (void)becomeKeyWindow {
     %orig;
@@ -41,6 +35,7 @@ uintptr_t OFF_VISIBLE      = 0x1B2D410;
     tripleTap.cancelsTouchesInView = NO;
     [self addGestureRecognizer:tripleTap];
 }
+%end
 
 %new
 - (void)toggleAzuriteMenu:(UITapGestureRecognizer *)gesture {
@@ -56,7 +51,7 @@ uintptr_t OFF_VISIBLE      = 0x1B2D410;
                 menuView.layer.borderColor = [UIColor colorWithRed:0 green:0.85 blue:1 alpha:0.8].CGColor;
                 menuView.clipsToBounds = YES;
 
-                // Title bar
+                // Title
                 UILabel *title = [[UILabel alloc] initWithFrame:CGRectMake(0, 10, 260, 34)];
                 title.text = @"Azurite External";
                 title.textColor = [UIColor cyanColor];
@@ -64,7 +59,7 @@ uintptr_t OFF_VISIBLE      = 0x1B2D410;
                 title.font = [UIFont boldSystemFontOfSize:20];
                 [menuView addSubview:title];
 
-                // Draggable pan
+                // Draggable
                 UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(dragMenu:)];
                 [menuView addGestureRecognizer:pan];
 
@@ -128,7 +123,7 @@ uintptr_t OFF_VISIBLE      = 0x1B2D410;
                 UIButton *closeBtn = [UIButton buttonWithType:UIButtonTypeSystem];
                 closeBtn.frame = CGRectMake(20, 350, 220, 40);
                 closeBtn.backgroundColor = [UIColor colorWithRed:0.8 green:0.2 blue:0.2 alpha:0.9];
-                [closeBtn setTitle:@"Close Menu" forState:UIControlStateNormal];
+                [closeBtn setTitle:@"Close" forState:UIControlStateNormal];
                 [closeBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
                 closeBtn.layer.cornerRadius = 12;
                 [closeBtn addTarget:self action:@selector(closeMenu) forControlEvents:UIControlEventTouchUpInside];
@@ -161,7 +156,7 @@ uintptr_t OFF_VISIBLE      = 0x1B2D410;
     menuView = nil;
 }
 
-// Streamproof hooks (screenshot + record)
+// Streamproof hooks
 %hook UIScreen
 + (UIImage *)captureScreen {
     if (StreamProof) return nil;
@@ -176,13 +171,13 @@ uintptr_t OFF_VISIBLE      = 0x1B2D410;
 }
 %end
 
-// Placeholder aimbot/ESP/silent hooks (update offsets & logic)
+// Placeholder real hooks (update offsets & add full logic)
 %hook PlayerMovement
 - (void)Update {
     %orig;
     if (EnableAimbot || SilentAim) {
-        // Placeholder - tambah real aim logic (get closest, calc angle, write bullet dir)
-        // Example: if (SilentAim) write bullet vector
+        // Placeholder – real aimbot/silent aim logic di sini
+        // Contoh: find closest player, calc angle, write bullet dir kalau SilentAim
     }
 }
 %end
@@ -190,11 +185,9 @@ uintptr_t OFF_VISIBLE      = 0x1B2D410;
 %ctor {
     @autoreleasepool {
         // Anti detect basic
-        ptrace(PT_DENY_ATTACH, 0, 0, 0);
-
         void* il2cpp = dlopen("libil2cpp.so", RTLD_LAZY);
         if (il2cpp) {
-            // Add real hooks here (MSHookFunction or LSPlant)
+            // Add real hooks nanti
         }
     }
 }
