@@ -1,5 +1,7 @@
 include $(THEOS)/makefiles/common.mk
 
+export TARGET = iphone:latest:14.0   # hilangkan warning arm64e
+
 TWEAK_NAME = AzuriteExternal
 AzuriteExternal_FILES = Tweak.mm
 AzuriteExternal_FRAMEWORKS = UIKit Foundation
