@@ -17,7 +17,7 @@ static BOOL StreamProof = NO;
     UITapGestureRecognizer *tripleTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(azuriteMenuToggle:)];
     tripleTap.numberOfTapsRequired = 3;
     tripleTap.numberOfTouchesRequired = 3;
-    tripleTap.cancelsTouchesInView = NO;  // biar game masih boleh respon touch
+    tripleTap.cancelsTouchesInView = NO;  // biar game masih respon touch
     [self addGestureRecognizer:tripleTap];
 }
 
@@ -27,6 +27,16 @@ static BOOL StreamProof = NO;
         static BOOL menuVisible = NO;
         menuVisible = !menuVisible;
 
+        // Dapatkan root VC moden (ganti keyWindow deprecated)
+        UIViewController *rootVC = nil;
+        for (UIWindowScene *scene in [UIApplication sharedApplication].connectedScenes) {
+            if ([scene isKindOfClass:[UIWindowScene class]]) {
+                rootVC = scene.windows.firstObject.rootViewController;
+                break;
+            }
+        }
+        if (!rootVC) return;
+
         if (menuVisible) {
             // Menu muncul - popup dengan toggle
             UIAlertController *menu = [UIAlertController alertControllerWithTitle:@"Azurite External" message:@"Menu Toggle" preferredStyle:UIAlertControllerStyleAlert];
@@ -34,23 +44,23 @@ static BOOL StreamProof = NO;
             // Toggle Aimbot
             [menu addAction:[UIAlertAction actionWithTitle:[NSString stringWithFormat:@"Aimbot: %@", EnableAimbot ? @"ON" : @"OFF"] style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
                 EnableAimbot = !EnableAimbot;
-                // Nanti tambah logic aimbot sebenar di sini
+                // Nanti tambah logic aimbot di sini
             }]];
 
-            // Toggle Hide Record/Screenshot
+            // Toggle Hide Rec
             [menu addAction:[UIAlertAction actionWithTitle:[NSString stringWithFormat:@"Hide Rec: %@", StreamProof ? @"ON" : @"OFF"] style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
                 StreamProof = !StreamProof;
-                // Nanti tambah hook screenshot/record di sini
+                // Nanti tambah hook screenshot di sini
             }]];
 
-            [menu addAction:[UIAlertAction actionWithTitle:@"Close Menu" style:UIAlertActionStyleCancel handler:nil]];
+            [menu addAction:[UIAlertAction actionWithTitle:@"Close" style:UIAlertActionStyleCancel handler:nil]];
 
-            [UIApplication.sharedApplication.keyWindow.rootViewController presentViewController:menu animated:YES completion:nil];
+            [rootVC presentViewController:menu animated:YES completion:nil];
         } else {
             // Menu tutup
             UIAlertController *close = [UIAlertController alertControllerWithTitle:@"Azurite External" message:@"Menu Hidden" preferredStyle:UIAlertControllerStyleAlert];
             [close addAction:[UIAlertAction actionWithTitle:@"OK" style:UIAlertActionStyleDefault handler:nil]];
-            [UIApplication.sharedApplication.keyWindow.rootViewController presentViewController:close animated:YES completion:nil];
+            [rootVC presentViewController:close animated:YES completion:nil];
         }
     }
 }
@@ -58,7 +68,7 @@ static BOOL StreamProof = NO;
 
 %ctor {
     @autoreleasepool {
-        // Test dlopen (untuk confirm libil2cpp load)
+        // Test dlopen libil2cpp
         void* il2cpp = dlopen("libil2cpp.so", RTLD_LAZY);
         if (il2cpp) {
             // Placeholder - tambah hook sebenar nanti
