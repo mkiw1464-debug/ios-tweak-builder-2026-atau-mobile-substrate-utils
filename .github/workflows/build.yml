@@ -17,7 +17,7 @@ jobs:
         run: |
           NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
           eval "$(/opt/homebrew/bin/brew shellenv)"
-          brew install ldid
+          brew install ldid dpkg  # tambah dpkg kalau missing
 
       - name: Setup Theos
         run: |
@@ -27,27 +27,28 @@ jobs:
           echo "THEOS=$HOME/theos" >> $GITHUB_ENV
           echo "$HOME/theos/bin" >> $GITHUB_PATH
 
-      - name: Debug Files
+      - name: Debug All Files
         run: |
           pwd
           ls -la .
-          cat Makefile || echo "Makefile missing"
-          cat control || echo "control missing"
-          head Tweak.mm || echo "Tweak.mm missing"
+          ls -la AzuriteExternal.plist || echo "Plist missing!"
+          cat AzuriteExternal.plist || echo "Plist content error"
 
-      - name: Build
+      - name: Build & Stage
         run: |
           make clean || true
           make package FINALPACKAGE=1 V=1 2>&1 | tee build.log
           cat build.log
-          ls -la packages/ obj/ 2>/dev/null || echo "No output"
+          ls -la packages/ obj/ .theos/ 2>/dev/null || echo "No output folders"
+          find . -name "*.deb" -exec ls -la {} \; || echo "No deb found"
 
       - name: Upload
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: Azurite-build
+          name: Azurite-build-full
           path: |
             packages/*.deb
             obj/*.dylib
             build.log
+            AzuriteExternal.plist
