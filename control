@@ -1,9 +1,8 @@
 Package: com.azurite.external
-Name: Azurite External
-Version: 1.0-2026
+Name: Azurite External Test
+Version: 1.0
 Architecture: iphoneos-arm64 arm64e
-Description: Minimal tweak simulation
+Description: Minimal test tweak for FF
 Maintainer: DVA1
-Author: DVA1
 Section: Tweaks
 Depends: mobilesubstrate
